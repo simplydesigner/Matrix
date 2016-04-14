@@ -1,218 +1,261 @@
-#ifndef Matrix_hpp
-#define Matrix_hpp
+#ifndef matrix_hpp
+#define matrix_hpp
 
 #include <iostream>
+#include <exception>
+#include <sstream>
+#include <fstream>
 
 template <typename T>
-class Matrix;
-
-template <class T>
-std::ostream & operator<<(std::ostream & output, const Matrix<T> &);
-
-template <class T>
-std::istream & operator>>(std::istream & input, Matrix<T> &);
+class matrix;
 
 template <typename T>
-class Matrix
+std::ostream & operator<<(std::ostream & output, const matrix<T> &);
+
+template <typename T>
+std::istream & operator>>(std::istream & input, matrix<T> &);
+
+template <typename T>
+class matrix
 {
 public:
-    Matrix(const Matrix & matrix);
-    Matrix(unsigned int rows, unsigned int columns);
-    virtual ~Matrix();
-    auto rows() const -> unsigned int ;
-    auto columns() const -> unsigned int;
+    matrix(const matrix & _matrix);
+    matrix(unsigned int rows, unsigned int columns);
+    virtual ~matrix() noexcept;
+    auto rows() const noexcept -> unsigned int;
+    auto columns() const noexcept -> unsigned int;
     auto operator[](unsigned int index) const -> const int *;
-    auto operator*(const Matrix &matrix) const -> Matrix;
-    auto operator+(const Matrix &matrix) const -> Matrix;
-    auto operator==(const Matrix &matrix) const -> bool;
-    auto operator=(const Matrix &matrix) -> Matrix &;
-    
-    friend std::ostream & operator<< <>(std::ostream & output, const Matrix<T> & matrix);
-    friend std::istream & operator>> <>(std::istream & input, Matrix<T> & matrix);
+    auto operator*(const matrix &_matrix) const -> matrix;
+    auto operator+(const matrix &_matrix) const -> matrix;
+    auto operator==(const matrix &_matrix) const noexcept -> bool;
+    auto operator=(const matrix &_matrix) -> matrix &;
+
+    friend std::ostream & operator<< <>(std::ostream & output, const matrix<T> & _matrix);
+    friend std::istream & operator>> <>(std::istream & input, matrix<T> & _matrix);
 private:
-    unsigned int m_rows, m_columns;
-    T **m_elements;
-    
-    Matrix(unsigned int rows, unsigned int columns, T **elements);
-    void swap(Matrix & matrix);
-    void fill(T **elements);
+    unsigned int rows_, columns_;
+    T **elements_;
+
+    matrix(unsigned int rows, unsigned int columns, T **elements);
+    auto swap(matrix & _matrix) -> void;
+    auto fill(T **elements) -> void;
+
+    auto throw_invalid_rows(unsigned int rows) const -> void;
+    auto throw_invalid_size(unsigned int rows, unsigned int columns) const -> void;
+    auto throw_out_of_range(unsigned index) const -> void;
+    static auto throw_unknown(const char * _message) -> void;
+    static auto throw_invalid_input_stream() -> void;
 };
 
 template <typename T>
-Matrix<T>::Matrix(const Matrix<T> &matrix) : m_rows(matrix.m_rows), m_columns(matrix.m_columns)
+auto matrix<T>::throw_invalid_rows(unsigned int rows) const -> void
 {
-    fill(matrix.m_elements);
+    std::ostringstream stringStream;
+    stringStream << "matrix has " << rows << " rows but expected " << rows_;
+    throw std::invalid_argument(stringStream.str());
 }
 
 template <typename T>
-Matrix<T>::Matrix(unsigned int rows, unsigned int columns) : m_rows(rows), m_columns(columns)
+auto matrix<T>::throw_invalid_size(unsigned int rows, unsigned int columns) const -> void
+{
+    std::ostringstream stringStream;
+    stringStream << "matrix has " << rows << "x" << columns << " size but expected " << rows_ << " x " << columns_;
+    throw std::invalid_argument(stringStream.str());
+}
+
+template <typename T>
+auto matrix<T>::throw_out_of_range(unsigned index) const -> void
+{
+    std::ostringstream stringStream;
+    stringStream << "index " << index << " beyond bounds [0.." << rows_ - 1 << "]";
+
+    throw std::invalid_argument(stringStream.str());
+}
+
+template <typename T>
+auto matrix<T>::throw_invalid_input_stream() -> void
+{
+    throw std::invalid_argument("invalid input stream");
+}
+
+template <typename T>
+auto matrix<T>::throw_unknown(const char * _message) -> void
+{
+    throw std::logic_error(_message);
+}
+
+
+template <typename T>
+matrix<T>::matrix(const matrix<T> &_matrix) : rows_(_matrix.rows_), columns_(_matrix.columns_)
+{
+    fill(_matrix.elements_);
+}
+
+template <typename T>
+matrix<T>::matrix(unsigned int rows, unsigned int columns) : rows_(rows), columns_(columns)
 {
     fill(nullptr);
 }
 
 template <typename T>
-Matrix<T>::Matrix(unsigned int rows, unsigned int columns, T **elements) : m_rows(rows), m_columns(columns)
+matrix<T>::matrix(unsigned int rows, unsigned int columns, T **elements) : rows_(rows), columns_(columns)
 {
     fill(elements);
 }
 
 template <typename T>
-void Matrix<T>::fill(T **elements)
+auto matrix<T>::fill(T **elements) -> void
 {
-    m_elements = new T *[m_rows];
-    for (unsigned int i = 0; i < m_rows; ++i) {
-        m_elements[i] = new T[m_columns];
-        for (unsigned int j = 0; j < m_columns; ++j) {
-            m_elements[i][j] = elements ? elements[i][j] : 0;
+    elements_ = new T *[rows_];
+    for (unsigned int i = 0; i < rows_; ++i) {
+        elements_[i] = new T[columns_];
+        for (unsigned int j = 0; j < columns_; ++j) {
+            elements_[i][j] = elements ? elements[i][j] : 0;
         }
     }
 }
 
 template <typename T>
-auto Matrix<T>::operator=(const Matrix & matrix) -> Matrix &
+auto matrix<T>::operator=(const matrix & _matrix) -> matrix &
 {
-    if ( this != &matrix ) {
-        Matrix(matrix).swap(*this);
+    if ( this != &_matrix ) {
+        matrix(_matrix).swap(*this);
     }
-    
+
     return *this;
 }
 
 template <typename T>
-void Matrix<T>::swap(Matrix & matrix)
+auto matrix<T>::swap(matrix & _matrix) -> void
 {
-    std::swap(m_rows, matrix.m_rows);
-    std::swap(m_columns, matrix.m_columns);
-    std::swap(m_elements, matrix.m_elements);
+    std::swap(rows_, _matrix.rows_);
+    std::swap(columns_, _matrix.columns_);
+    std::swap(elements_, _matrix.elements_);
 }
 
 template <typename T>
-Matrix<T>::~Matrix()
+matrix<T>::~matrix() noexcept
 {
-    for (unsigned int i = 0; i < m_rows; ++i) {
-        delete [] m_elements[i];
+    for (unsigned int i = 0; i < rows_; ++i) {
+        delete [] elements_[i];
     }
-    
-    delete [] m_elements;
+
+    delete [] elements_;
 }
 
 template <typename T>
-auto Matrix<T>::rows() const -> unsigned int
+auto matrix<T>::rows() const noexcept -> unsigned int
 {
-    return m_rows;
+    return rows_;
 }
 
 template <typename T>
-auto Matrix<T>::columns() const -> unsigned int
+auto matrix<T>::columns() const noexcept -> unsigned int
 {
-    return m_columns;
+    return columns_;
 }
 
 template <typename T>
-auto Matrix<T>::operator[](unsigned int index) const -> const int *
+auto matrix<T>::operator[](unsigned int index) const -> const int *
 {
-    if ( index >= m_rows ) {
-        throw std::invalid_argument("index goes abroad");
+    if ( index >= rows_ ) {
+        throw_out_of_range(index);
     }
-    
-    return m_elements[index];
+
+    return elements_[index];
 }
 
 template <typename T>
-auto Matrix<T>::operator*(const Matrix & matrix) const -> Matrix
+auto matrix<T>::operator*(const matrix & _matrix) const -> matrix
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    
-    if ( m_columns != matrix.m_rows ) {
-        throw std::invalid_argument("matrix sizes do not match");
+    if ( columns_ != _matrix.rows_ ) {
+        throw_invalid_rows(_matrix.rows_);
     }
-    
-    unsigned int n = m_rows;
-    unsigned int m = matrix.m_columns;
-    unsigned int s = m_columns;
-    
+
+    unsigned int n = rows_;
+    unsigned int m = _matrix.columns_;
+    unsigned int s = columns_;
+
     T **elements = new T *[n];
     for (unsigned int i = 0; i < n; ++i) {
         elements[i] = new T[m];
         for (unsigned int j = 0; j < m; ++j) {
             T value = 0;
             for (unsigned int k = 0; k < s; ++k) {
-                value += m_elements[i][k] * matrix.m_elements[k][j];
+                value += elements_[i][k] * _matrix.elements_[k][j];
             }
             elements[i][j] = value;
         }
     }
-    
-    return Matrix(n, m, elements);
+
+    return matrix(n, m, elements);
 }
 
 template <typename T>
-auto Matrix<T>::operator+(const Matrix & matrix) const -> Matrix
+auto matrix<T>::operator+(const matrix & _matrix) const -> matrix
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    
-    if ( m_rows != matrix.m_rows || m_columns != matrix.m_columns ) {
-        throw std::invalid_argument("matrix sizes do not match");
+    if ( rows_ != _matrix.rows_ || columns_ != _matrix.columns_ ) {
+        throw_invalid_size(_matrix.rows_, _matrix.columns_);
     }
-    
-    unsigned int n = m_rows;
-    unsigned int m = m_columns;
-    
+
+    unsigned int n = rows_;
+    unsigned int m = columns_;
+
     T **data = new T *[n];
     for (unsigned int i = 0; i < n; ++i) {
         data[i] = new T[m];
         for (unsigned int j = 0; j < m; ++j) {
-            data[i][j] = m_elements[i][j] + matrix.m_elements[i][j];
+            data[i][j] = elements_[i][j] + _matrix.elements_[i][j];
         }
     }
-    
-    return Matrix(n, m, data);
+
+    return matrix(n, m, data);
 }
 
 template <typename T>
-auto Matrix<T>::operator==(const Matrix & matrix) const -> bool
+auto matrix<T>::operator==(const matrix & _matrix) const noexcept -> bool
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    
-    if ( m_rows != matrix.m_rows || m_columns != matrix.m_columns ) {
+    if ( rows_ != _matrix.rows_ || columns_ != _matrix.columns_ ) {
         return false;
     }
-    
-    for (unsigned int i = 0; i < m_rows; ++i) {
-        for (unsigned int j = 0; j < m_columns; ++j) {
-            if ( m_elements[i][j] != matrix.m_elements[i][j] ) {
+
+    for (unsigned int i = 0; i < rows_; ++i) {
+        for (unsigned int j = 0; j < columns_; ++j) {
+            if ( elements_[i][j] != _matrix.elements_[i][j] ) {
                 return false;
             }
         }
     }
-    
+
     return true;
 }
 
 template <typename T>
-std::ostream & operator<<(std::ostream & output, const Matrix<T> & matrix)
+std::ostream & operator<<(std::ostream & output, const matrix<T> & _matrix)
 {
-    for (unsigned int i = 0; i < matrix.m_rows; ++i) {
-        output << std::endl;
-        for (unsigned int j = 0; j < matrix.m_columns; ++j) {
-            output << matrix.m_elements[i][j] << "\t";
+    for (unsigned int i = 0; i < _matrix.rows_; ++i) {
+        for (unsigned int j = 0; j < _matrix.columns_; ++j) {
+            if ( !(output << _matrix.elements_[i][j] << "\t") ) {
+                matrix<T>::throw_unknown(__PRETTY_FUNCTION__);
+            }
         }
+        output << std::endl;
     }
-    
+
     return output;
 }
 
 template <typename T>
-std::istream & operator>>(std::istream & input, Matrix<T> & matrix)
+std::istream & operator>>(std::istream & input, matrix<T> & _matrix)
 {
-    for (unsigned int i = 0; i < matrix.m_rows; ++i) {
-        for (unsigned int j = 0; j < matrix.m_columns; ++j) {
-            if ( !(input >> matrix.m_elements[i][j]) ) {
-                throw "exception in fill matrix";
+    for (unsigned int i = 0; i < _matrix.rows_; ++i) {
+        for (unsigned int j = 0; j < _matrix.columns_; ++j) {
+            if ( !(input >> _matrix.elements_[i][j]) ) {
+                matrix<T>::throw_invalid_input_stream();
             }
         }
     }
-    
+
     return input;
 }
 
