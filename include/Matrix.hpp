@@ -84,7 +84,6 @@ auto matrix<T>::throw_unknown(const char * _message) -> void
     throw std::logic_error(_message);
 }
 
-
 template <typename T>
 matrix<T>::matrix(const matrix<T> &_matrix) : rows_(_matrix.rows_), columns_(_matrix.columns_)
 {
