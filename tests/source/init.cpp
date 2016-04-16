@@ -11,7 +11,7 @@ SCENARIO("Matrix init", "[init]") {
 
 		WHEN("Create instansce of Matrix") {
 
-			Matrix<int> matrix(rows, columns);
+			matrix<int> matrix(rows, columns);
 
 			THEN("The number of rows and columns must be preserved") {
 
@@ -24,7 +24,7 @@ SCENARIO("Matrix init", "[init]") {
 
 SCENARIO("Matrix >>", "[fill]") {
 	std::ifstream input("A2x2.txt");
-	Matrix<int> A = Matrix<int>(2, 2);
+	matrix<int> A = matrix<int>(2, 2);
 	REQUIRE( input >> A );
 	REQUIRE( A[0][0] == 1 );
 	REQUIRE( A[0][1] == 1 );
@@ -33,25 +33,25 @@ SCENARIO("Matrix >>", "[fill]") {
 }
 
 SCENARIO("Matrix +", "[addition]") {
-	Matrix<int> A = Matrix<int>(2, 2);
+	matrix<int> A = matrix<int>(2, 2);
 	std::ifstream("A2x2.txt") >> A;
-	Matrix<int> B = Matrix<int>(2, 2);
+	matrix<int> B = matrix<int>(2, 2);
 	std::ifstream("B2x2.txt") >> B;
-	Matrix<int> expected = Matrix<int>(2, 2);
+	matrix<int> expected = matrix<int>(2, 2);
 	std::ifstream("A+B2x2.txt") >> expected;
 
-	Matrix<int> result = A + B;
+	matrix<int> result = A + B;
 	REQUIRE(result == expected);
 }
 
 SCENARIO("Matrix *", "[multiplication]") {
-	Matrix<int> A = Matrix<int>(2, 2);
+	matrix<int> A = matrix<int>(2, 2);
 	std::ifstream("A2x2.txt") >> A;
-	Matrix<int> B = Matrix<int>(2, 2);
+	matrix<int> B = matrix<int>(2, 2);
 	std::ifstream("B2x2.txt") >> B;
-	Matrix<int> expected = Matrix<int>(2, 2);
+	matrix<int> expected = matrix<int>(2, 2);
 	std::ifstream("A*B2x2.txt") >> expected;
 
-	Matrix<int> result = A * B;
+	matrix<int> result = A * B;
 	REQUIRE(result == expected);
 }
