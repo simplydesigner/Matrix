@@ -15,7 +15,7 @@ std::ostream & operator<<(std::ostream & output, const matrix<T> &);
 template <typename T>
 std::istream & operator>>(std::istream & input, matrix<T> &);
 
-template <typename T>
+template <typename T = int>
 class matrix
 {
 public:
@@ -25,20 +25,20 @@ public:
     auto rows() const noexcept -> unsigned int;
     auto columns() const noexcept -> unsigned int;
     auto operator[](unsigned int index) const -> const int *;
-    auto operator*(const matrix &_matrix) const -> matrix;
-    auto operator+(const matrix &_matrix) const -> matrix;
-    auto operator==(const matrix &_matrix) const noexcept -> bool;
-    auto operator=(const matrix &_matrix) -> matrix &;
+    auto operator*(const matrix & _matrix) const -> matrix;
+    auto operator+(const matrix & _matrix) const -> matrix;
+    auto operator==(const matrix & _matrix) const noexcept -> bool;
+    auto operator=(const matrix & _matrix) -> matrix &;
 
     friend std::ostream & operator<< <>(std::ostream & output, const matrix<T> & _matrix);
     friend std::istream & operator>> <>(std::istream & input, matrix<T> & _matrix);
 private:
     unsigned int rows_, columns_;
-    T **elements_;
+    T ** elements_;
 
     matrix(unsigned int rows, unsigned int columns, T **elements);
     auto swap(matrix & _matrix) -> void;
-    auto fill(T **elements) -> void;
+    auto fill(T ** elements) -> void;
 
     auto throw_invalid_rows(unsigned int rows) const -> void;
     auto throw_invalid_size(unsigned int rows, unsigned int columns) const -> void;
